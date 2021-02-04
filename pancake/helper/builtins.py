@@ -1,7 +1,10 @@
 from copy import deepcopy
 from typing import Callable
 
+import pancake.interpreter.interpreter as interpreter
+import pancake.interpreter.eval as evaluate
 from pancake.helper.function import Function
+from pancake.helper.variable import Variable
 from pancake.interpreter.print import pancake_print
 
 class Builtin(Function):
@@ -30,6 +33,83 @@ class If(Builtin):
         else:
             false.execute(stack, function_scope, variable_scope)
             self.scope_updates = false.scope_updates
+
+class Import(Builtin):
+    def __init__(self, require):
+        super().__init__()
+        self.require = require
+
+    @staticmethod
+    def imports_for_function(body, fscope, vscope, already_imported) -> tuple[list, list]:
+        function_imports = set()
+        variable_imports = set()
+
+        for form in body:
+            if isinstance(form, Variable) and form.name not in already_imported:
+                if form.name in fscope.keys():
+                    function_imports.add(form.name)
+                    already_imported.append(form.name)
+
+                    inner_fimports, inner_vimports = Import.imports_for_function(fscope[form.name].body, fscope, vscope, already_imported)
+                    function_imports |= inner_fimports
+                    variable_imports |= inner_vimports
+                elif form.name in vscope.keys():
+                    variable_imports.add(form.name)
+                    already_imported.append(form.name)
+            elif isinstance(form, Function):
+                inner_fimports, inner_vimports = Import.imports_for_function(form.body, fscope, vscope, already_imported)
+                function_imports |= inner_fimports
+                variable_imports |= inner_vimports
+
+        return function_imports, variable_imports
+
+    def execute(self, stack, function_scope, variable_scope):
+        file_name = stack.pop()
+        require_names = []
+
+        if self.require:
+            require_names = stack.pop()
+
+        with open(file_name) as f:
+            new_fscope = {}
+            new_vscope = {}
+
+            forms = interpreter.Interpreter.READ(f.read())
+            evaluate.evaluate(forms, [], new_fscope, new_vscope)
+
+            if self.require:
+                for fname in new_fscope.keys():
+                    if fname in require_names:
+                        fimports, vimports = Import.imports_for_function(new_fscope[fname].body, new_fscope, new_vscope, [])
+                        
+                        for fimport in fimports:
+                            function_scope[fimport] = new_fscope[fimport]
+
+                        for vimport in vimports:
+                            variable_scope[vimport] = new_vscope[vimport]
+
+                        function_scope[fname] = new_fscope[fname]
+                
+                for vname in new_vscope.keys():
+                    if vname in require_names and isinstance(new_vscope[vname], Function):
+                        fimports, vimports = Import.imports_for_function(new_vscope[vname].body, new_fscope, new_vscope, [])
+                        
+                        for fimport in fimports:
+                            function_scope[fimport] = new_fscope[fimport]
+
+                        for vimport in vimports:
+                            variable_scope[vimport] = new_vscope[vimport]
+                            self.scope_updates[vimport] = new_vscope[vimport]
+
+                    variable_scope[vname] = new_vscope[vname]
+                    self.scope_updates[vname] = new_vscope[vname]
+            else:
+                function_scope |= new_fscope
+
+                for vname in new_vscope:
+                    self.scope_updates[vname] = new_vscope[vname]
+                
+                variable_scope |= new_vscope
 
 class Input(Builtin):
     def execute(self, stack, function_scope, variable_scope):
@@ -160,7 +240,9 @@ class Nth(Builtin):
 FUNCTION_BUILTINS = {
     "execute": Execute(),
     "if": If(),
+    "import": Import(False),
     "print": Print(),
+    "require": Import(True),
 
     "and": And(),
     "not": Not(),

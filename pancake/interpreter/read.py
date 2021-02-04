@@ -66,7 +66,7 @@ def read_form(reader):
     elif current == "false":
         return False
     elif current[0] == "\"":
-        return current
+        return current[1:-1]
     elif current.isnumeric():
         return int(current)
     elif is_float(current):

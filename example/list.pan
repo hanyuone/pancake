@@ -42,4 +42,6 @@
   result
 } =>map
 
-{ n : n 3 > } [ 1 2 3 4 5 ] filter print
+&map =map-fn
+
+# { n : n 3 > } [ 1 2 3 4 5 ] filter print

@@ -43,11 +43,11 @@ class Function:
         cleaned_body = Function.clean_body(deepcopy(self.body))
         body_string = " ".join(str(x) for x in cleaned_body)
 
-        Function.display(" ".join(cleaned_args), body_string)
+        return Function.display(" ".join(cleaned_args), body_string)
 
     def raw(self):
         body_string = " ".join(x.raw() if isinstance(x, Function) else str(x) for x in self.body)
-        Function.display(" ".join(self.args), body_string)
+        return Function.display(" ".join(self.args), body_string)
 
     def execute(self, stack, function_scope, variable_scope):
         for arg in self.args:
