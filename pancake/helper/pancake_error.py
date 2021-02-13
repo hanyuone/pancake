@@ -1,0 +1,2 @@
+class PancakeError(Exception):
+    pass

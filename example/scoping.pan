@@ -1,13 +1,11 @@
 {:
   0 =n
-  {:} {: n 1 + =n } true if
+} =>set-0
+
+{:
+  1 =n
+  set-0
   n print
-} =>test
+} =>print-1
 
-test
-
-0 =q
-q print
-{: 5 =q } =>global-test
-global-test
-q print
+print-1

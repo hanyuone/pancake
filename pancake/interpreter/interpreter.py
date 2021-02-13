@@ -25,6 +25,10 @@ class Interpreter:
         function_scope = FUNCTION_BUILTINS
         variable_scope = {}
 
+        # stdlib implementation
+        with open("./stdlib/core.pan") as f:
+            evaluate(Interpreter.READ(f.read()), stack, function_scope, variable_scope, is_global=True)
+
         evaluate(forms, stack, function_scope, variable_scope, is_global=True)
 
     @staticmethod

@@ -39,14 +39,20 @@ def evaluate(forms, stack, function_scope, variable_scope, is_global=False):
         elif isinstance(form, Variable):
             if form.name in variable_scope.keys():
                 stack.append(variable_scope[form.name])
+            # Declared variables in named functions shouldn't affect the scope
+            # of variables outside it
             elif form.name in function_scope.keys():
                 function_scope[form.name].execute(stack, function_scope, deepcopy(variable_scope))
                 scope_updates |= function_scope[form.name].scope_updates
-                variable_scope |= scope_updates
+
+                for key, value in scope_updates.items():
+                    if key in variable_scope.keys():
+                        variable_scope[key] = value
+
                 function_scope[form.name].scope_updates = {}
             else:
                 raise NameError(f"Undefined symbol {form.name}")
-        # Making closures/currying work, really slow solution but it works
+        # Making closures/currying work, may need to implement GC soon
         elif isinstance(form, function.Function):
             if is_global:
                 stack.append(form)

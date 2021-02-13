@@ -1,6 +1,7 @@
 from copy import copy, deepcopy
 from typing import Tuple
 
+from pancake.helper.declare import Declare
 from pancake.helper.variable import Variable
 
 # Avoid circular imports
@@ -50,7 +51,7 @@ class Function:
         return Function.display(" ".join(self.args), body_string)
 
     def execute(self, stack, function_scope, variable_scope):
-        for arg in self.args:
+        for arg in reversed(self.args):
             variable_scope[arg] = stack.pop()
         
         self.scope_updates = evaluate.evaluate(self.body, stack, function_scope, variable_scope)
@@ -73,6 +74,8 @@ class Function:
 
             if isinstance(item, Variable):
                 body[index].name = Function.clean_name(item.name)
+            elif isinstance(item, Declare):
+                body[index].name = Function.clean_name(item.name)
             elif isinstance(item, Function):
                 body[index].body = Function.clean_body(item.body)
 
@@ -85,6 +88,11 @@ class Function:
             item = body[index]
 
             if isinstance(item, Variable) and item.name in args:
+                body[index].name = f"{fid}#{item.name}"
+            elif isinstance(item, Declare) and not Function.is_argument(item.name):
+                if item.name not in args:
+                    args.append(item.name)
+
                 body[index].name = f"{fid}#{item.name}"
             elif isinstance(item, Function):
                 body[index].body = Function.edited_body(fid, args, item.body)

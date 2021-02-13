@@ -4,16 +4,17 @@ from pancake.helper.declare import Declare, DeclareType
 from pancake.helper.deref import Deref
 from pancake.helper.function import Function
 from pancake.helper.reader import Reader
+from pancake.helper.symbol import Symbol
 from pancake.helper.variable import Variable
 
 def tokenise(code):
     regex = re.compile(r"""
-    [\s,]*
+    [\s,]*                   # Whitespace
     (
-        [\[\]{}()|:]          # Special characters
+        [\[\]{}()|]          # Special characters
         | "(?:\\.|[^\\"])*"? # Strings
         | \#.*               # Comments
-        | [^\s\[\]{}():,]*   # Every other literal
+        | [^\s\[\]{}(),]*   # Every other literal
     )
     """, re.VERBOSE)
 
@@ -65,6 +66,9 @@ def read_form(reader):
         return True
     elif current == "false":
         return False
+    # Symbols can't consist of just a :
+    elif current[0] == ":" and len(current) >= 2:
+        return Symbol(current[1:])
     elif current[0] == "\"":
         return current[1:-1]
     elif current.isnumeric():
