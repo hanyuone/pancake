@@ -271,7 +271,7 @@ class Nth(Builtin):
         stack.append(ls[n])
 
 FUNCTION_BUILTINS = {
-    "execute": Execute(),
+    "exec": Execute(),
     "if": If(),
     "import": Import(),
     "print": Print(),
