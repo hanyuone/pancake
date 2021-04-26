@@ -4,6 +4,7 @@
 
 {:
   1 =n
+  # Shouldn't affect n, the n in set-0 is its own variable
   set-0
   n print
 } =>print-1

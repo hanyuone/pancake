@@ -11,8 +11,26 @@ class Function:
     ID = 0
     CLOSURE_ID = 0
 
+    # Gives a function a unique ID (needed for function scoping)
+    @staticmethod
+    def new_id():
+        try:
+            return Function.ID
+        finally:
+            Function.ID += 1
+
+    # Gives a function a unique closure ID
+    # (needed for currying and referencing variables inside
+    # nested functions)
+    @staticmethod
+    def new_closure_id():
+        try:
+            return Function.CLOSURE_ID
+        finally:
+            Function.CLOSURE_ID += 1
+
     def __init__(self, args, body, parent_id=-1, closure=False):
-        self.id = Function.ID
+        self.id = Function.new_id()
 
         if closure:
             self.args = args
@@ -24,8 +42,8 @@ class Function:
         self.parent_id = parent_id
         self.scope_updates = {}
 
-        Function.ID += 1
-
+    # Given the function's arguments and body, displays it
+    # in a user-readable format
     @staticmethod
     def display(args: str, body: str) -> str:
         if len(args) == 0 and len(body) == 0:
@@ -46,10 +64,15 @@ class Function:
 
         return Function.display(" ".join(cleaned_args), body_string)
 
+    # Displays the "raw" version of a function, which basically
+    # includes all "annotated" versions of argument/variable names
+    # (like 25#x or @0#x instead of just x)
     def raw(self):
         body_string = " ".join(x.raw() if isinstance(x, Function) else str(x) for x in self.body)
         return Function.display(" ".join(self.args), body_string)
 
+    # Executes the first function on the stack, given the current
+    # function/variable scope
     def execute(self, stack, function_scope, variable_scope):
         for arg in reversed(self.args):
             variable_scope[arg] = stack.pop()
@@ -81,7 +104,8 @@ class Function:
 
         return body
 
-    # Added to fix scoping issues
+    # Add little annotations to indicate the scope of various functions,
+    # needed to make example/curry.pan and example/scoping.pan work properly
     @staticmethod
     def edited_body(fid: int, args: list[str], body: list) -> list:
         for index in range(len(body)):
@@ -104,12 +128,21 @@ class Function:
 
         return body
 
+    # Checks if the current variable name is an argument or not
+    # (i.e. has a # in it)
     @staticmethod
     def is_argument(name: str) -> bool:
         return "#" in name
 
+    # Checks if the current variable is a closure argument
+    # (i.e. has an @ in it)
     @staticmethod
-    def name_from(name: str) -> int:
+    def is_closure(name: str) -> bool:
+        return "@" in name
+
+    # Returns the ID of the function the variable is from
+    @staticmethod
+    def fid_of_name(name: str) -> int:
         if name[0] == "@":
             return -1
         else:
@@ -127,9 +160,9 @@ class Function:
 
             if isinstance(symbol, Variable) \
                 and Function.is_argument(symbol.name) \
-                and Function.name_from(symbol.name) == parent_id:
+                and Function.fid_of_name(symbol.name) == parent_id:
                 clean = Function.clean_name(symbol.name)
-                closure_name = f"@{Function.CLOSURE_ID}#{clean}"
+                closure_name = f"@{Function.new_closure_id()}#{clean}"
 
                 mapping[closure_name] = symbol.name
                 new_body[i].name = closure_name

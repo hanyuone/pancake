@@ -1,9 +1,7 @@
-3 2 5 { x :
+3 2 { x :
   { y :
-    { z :
-      x y + z +
-    }
+    x y +
   }
-} exec exec exec print # Should output 10
+} exec exec print # Should output 5
 
-3 2 5 { x y : { z : x y + z + } } exec exec print # Also should output 10
+3 2 5 { x y : { z : x y + z + } } exec exec print # Should output 10

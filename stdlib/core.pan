@@ -42,10 +42,12 @@
 
 # ARRAY MANIPULATION
 
+{ list : list length zero? } =>empty?
+
 { list : 0 list nth } =>first
 
 { start end list :
-  [] start
+  [], start
   {:
     =index
     index list nth swap append
@@ -54,8 +56,10 @@
   pop
 } =>slice
 
+{ list : 1 list length list slice } =>rest
+
 { start end :
-  [] start
+  [], start
   {:
     =index
     index swap append
@@ -101,8 +105,14 @@
 } =>filter
 
 { list fn :
-  list first
-  1 list length list slice
+  []
+  list { item :
+    {: item swap append } item fn exec unless
+  } for
+} =>reject
+
+{ list fn :
+  list first, list rest
   { item :
     item fn exec
   } for

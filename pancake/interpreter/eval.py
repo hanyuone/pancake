@@ -46,7 +46,7 @@ def evaluate(forms, stack, function_scope, variable_scope, is_global=False):
                 scope_updates |= function_scope[form.name].scope_updates
 
                 for key, value in scope_updates.items():
-                    if key in variable_scope.keys():
+                    if key in variable_scope.keys() or function.Function.is_closure(key):
                         variable_scope[key] = value
 
                 function_scope[form.name].scope_updates = {}
@@ -64,7 +64,6 @@ def evaluate(forms, stack, function_scope, variable_scope, is_global=False):
                 
                 variable_scope |= scope_updates
                 stack.append(func)
-                function.Function.CLOSURE_ID += 1
         else:
             stack.append(form)
 
